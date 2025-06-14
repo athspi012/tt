@@ -1,0 +1,38 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Download model
+        run: |
+          curl -L -o inswapper_128.onnx https://huggingface.co/henryruhs/insightface-models/resolve/main/inswapper_128.onnx
+
+      - name: Build EXE
+        run: |
+          pyinstaller --onefile --noconsole app.py
+          copy inswapper_128.onnx dist\
+
+      - name: Upload executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: face-swapper-exe
+          path: dist/*
