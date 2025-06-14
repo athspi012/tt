@@ -1,14 +1,15 @@
 @echo off
+:: Install dependencies
+pip install --upgrade pip
 pip install -r requirements.txt
 pip install pyinstaller
 
-:: Optional: remove previous build
+:: Clean previous builds
 rmdir /s /q build dist
-del app.spec
+if exist app.spec del app.spec
 
-:: Create executable with PyInstaller
-pyinstaller --onefile --noconsole app.py
+:: Build standalone EXE with model included
+pyinstaller --onefile --noconsole --add-data "inswapper_128.onnx;." app.py
 
-echo.
-echo ✅ DONE! Your EXE is in the dist/ folder.
+echo Build complete! Find app.exe in dist\ folder.
 pause
