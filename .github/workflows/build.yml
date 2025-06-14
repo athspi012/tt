@@ -1,8 +1,8 @@
-name: Build Face Swapper EXE
+name: Build FaceSwapper EXE
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -10,25 +10,25 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v3
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
 
-      - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
 
-      - name: Build EXE
-        run: pyinstaller --onefile --noconsole app.py
+    - name: Build EXE
+      run: |
+        pyinstaller --onefile --noconsole --add-data "inswapper_128.onnx;." app.py
 
-      - name: Upload EXE
-        uses: actions/upload-artifact@v4
-        with:
-          name: face_swapper
-          path: dist/app.exe
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: face_swapper_exe
+        path: dist/app.exe
