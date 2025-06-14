@@ -1,29 +1,40 @@
+import os
+import sys
+import urllib.request
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
 import cv2
-import os
-import sys
 import insightface
 from insightface.app import FaceAnalysis
 from insightface.model_zoo import get_model
 
+MODEL_NAME = "inswapper_128.onnx"
+MODEL_URL = "https://huggingface.co/henryruhs/insightface-models/resolve/main/" + MODEL_NAME
+
 def resource_path(relative_path):
+    # for PyInstaller
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, relative_path)
     return os.path.join(os.path.abspath("."), relative_path)
 
-model_path = resource_path("inswapper_128.onnx")
-face_app = FaceAnalysis(name='buffalo_l')
-face_app.prepare(ctx_id=0, det_size=(640, 640))
-swapper = get_model(model_path, download=False, download_zip=False)
+def ensure_model_exists():
+    model_path = resource_path(MODEL_NAME)
+    if not os.path.exists(model_path):
+        print(f"Downloading model from {MODEL_URL}...")
+        try:
+            urllib.request.urlretrieve(MODEL_URL, model_path)
+            print("✅ Model downloaded.")
+        except Exception as e:
+            print("❌ Failed to download model:", e)
+            sys.exit(1)
+    return model_path
 
 class FaceSwapperApp:
     def __init__(self, root):
         self.root = root
         self.root.title("AI Face Swapper")
         self.root.geometry("800x600")
-
         self.source_img_path = ""
         self.target_img_path = ""
 
@@ -54,7 +65,7 @@ class FaceSwapperApp:
         tgt_faces = face_app.get(tgt_img)
 
         if not src_faces or not tgt_faces:
-            messagebox.showerror("Error", "No face detected.")
+            messagebox.showerror("Error", "No face detected in one of the images.")
             return
 
         result_img = swapper.get(tgt_img, tgt_faces[0], src_faces[0], paste_back=True)
@@ -65,12 +76,14 @@ class FaceSwapperApp:
         img_tk = ImageTk.PhotoImage(img)
         self.preview_label.configure(image=img_tk)
         self.preview_label.image = img_tk
-        messagebox.showinfo("Success", "Face swapped image saved.")
+        messagebox.showinfo("Success", "Face swapped image saved as swapped_result.jpg")
 
 if __name__ == "__main__":
-    if not os.path.exists(model_path):
-        print("Model not found!")
-        sys.exit(1)
+    model_path = ensure_model_exists()
+    face_app = FaceAnalysis(name='buffalo_l')
+    face_app.prepare(ctx_id=0, det_size=(640, 640))
+    swapper = get_model(model_path, download=False, download_zip=False)
+
     root = tk.Tk()
     app = FaceSwapperApp(root)
     root.mainloop()
